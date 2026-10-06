@@ -1,0 +1,344 @@
+﻿<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FixBot - Assistant de Réparation IA</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .chat-scroll::-webkit-scrollbar { width: 6px; }
+    .chat-scroll::-webkit-scrollbar-thumb { background-color: #334155; border-radius: 9999px; }
+  </style>
+</head>
+<body class="h-full flex flex-col max-w-md mx-auto bg-slate-950 border-x border-slate-800 shadow-2xl relative overflow-hidden">
+
+
+  <!-- Header -->
+  <header class="p-4 bg-slate-900/80 backdrop-blur border-b border-slate-800 flex items-center justify-between sticky top-0 z-10">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+        <i class="fa-solid fa-screwdriver-wrench text-lg"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-lg leading-tight tracking-wide text-white">FixBot <span class="text-xs font-semibold bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">PRO</span></h1>
+        <p class="text-xs text-slate-400">Diagnostic & Réparation IA</p>
+      </div>
+    </div>
+    <button onclick="toggleModal(true)" class="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800">
+      <i class="fa-solid fa-gear text-lg"></i>
+    </button>
+  </header>
+
+
+  <!-- Key Warning Banner -->
+  <div id="api-key-warning" class="bg-amber-500/10 border-b border-amber-500/20 p-3 text-xs text-amber-300 flex items-center justify-between">
+    <span class="flex items-center gap-2">
+      <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
+      Clé API requise pour le diagnostic.
+    </span>
+    <button onclick="toggleModal(true)" class="font-bold underline hover:text-amber-200">Configurer</button>
+  </div>
+
+
+  <!-- Main Chat Container -->
+  <main id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 chat-scroll">
+    <!-- Welcome Message -->
+    <div class="flex gap-3">
+      <div class="w-8 h-8 rounded-lg bg-orange-600 flex-shrink-0 flex items-center justify-center text-white text-xs">
+        <i class="fa-solid fa-robot"></i>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[85%] space-y-2">
+        <p class="text-sm font-medium text-slate-200">
+          Bonjour ! Je suis <strong>FixBot</strong>, ton assistant expert en réparation.
+        </p>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Envoie-moi une photo de l'appareil en panne ou décris le problème pour obtenir un diagnostic complet et les étapes de réparation.
+        </p>
+      </div>
+    </div>
+  </main>
+
+
+  <!-- Image Preview Bar -->
+  <div id="image-preview-container" class="hidden px-4 py-2 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <img id="image-preview" src="" class="w-12 h-12 object-cover rounded-lg border border-slate-700">
+      <span class="text-xs text-slate-300 font-medium">Photo jointe</span>
+    </div>
+    <button id="remove-image-btn" class="text-slate-400 hover:text-red-400 p-1">
+      <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
+  </div>
+
+
+  <!-- Input Form -->
+  <footer class="p-4 bg-slate-900 border-t border-slate-800">
+    <form id="chat-form" class="flex items-center gap-2">
+      <input type="file" id="file-input" accept="image/*" class="hidden">
+      
+      <button type="button" id="upload-btn" class="p-3 bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-700 hover:bg-slate-700 transition-colors">
+        <i class="fa-solid fa-camera text-lg"></i>
+      </button>
+
+
+      <input type="text" id="user-input" placeholder="Décris la panne ou pose une question..." class="flex-1 bg-slate-950 border border-slate-800 text-slate-100 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500/50 transition-colors">
+
+
+      <button type="submit" id="send-btn" class="p-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold rounded-xl shadow-lg shadow-orange-500/20 hover:opacity-90 transition-opacity">
+        <i class="fa-solid fa-paper-plane"></i>
+      </button>
+    </form>
+  </footer>
+
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-key text-amber-500"></i> Configuration API
+        </h3>
+        <button onclick="toggleModal(false)" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+
+      <p class="text-xs text-slate-400 leading-relaxed">
+        Entrez votre clé API Gemini pour activer le diagnostic IA.
+      </p>
+
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Clé API Gemini</label>
+        <input type="password" id="api-key-input" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-orange-500">
+      </div>
+
+
+      <button id="save-settings-btn" class="w-full py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-xl transition-colors text-sm">
+        Enregistrer la clé
+      </button>
+    </div>
+  </div>
+
+
+  <script>
+    const SYSTEM_PROMPT = `Tu es FixBot, un expert mondial en diagnostic et réparation d'appareils électroniques et électroménagers. Ton objectif est de guider n'importe quel débutant pour réparer son objet en toute sécurité.
+
+
+Consignes de fonctionnement :
+1. Sécurité d'abord (Priorité Absolue) : Si l'appareil implique de forts risques (courant secteur, condensateurs haute tension, batterie lithium gonflée), commence OBLIGATOIREMENT par un bloc ⚠️ ALERTE SÉCURITÉ.
+2. Analyse & Doute (Mode Interactif) : Si l'image est floue ou s'il manque d'infos, pose 1 à 2 questions courtes.
+3. Format de réponse :
+   - 📍 Diagnostic probable : (Nom de la panne et difficulté /5)
+   - 🛠️ Outils & Pièces nécessaires : (Liste du matériel)
+   - 📋 Procédure pas à pas : (Étapes numérotées courtes et claires)
+   - ❓ Validation : Finis par une question de confirmation.`;
+
+
+    let currentApiKey = "";
+    let base64Image = null;
+    let chatHistory = [];
+
+
+    const chatContainer = document.getElementById('chat-container');
+    const chatForm = document.getElementById('chat-form');
+    const userInput = document.getElementById('user-input');
+    const fileInput = document.getElementById('file-input');
+    const uploadBtn = document.getElementById('upload-btn');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const imagePreview = document.getElementById('image-preview');
+    const removeImageBtn = document.getElementById('remove-image-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const apiKeyInput = document.getElementById('api-key-input');
+    const apiKeyWarning = document.getElementById('api-key-warning');
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+
+
+    function toggleModal(show) {
+      if (show) {
+        settingsModal.classList.remove('hidden');
+      } else {
+        settingsModal.classList.add('hidden');
+      }
+    }
+
+
+    try {
+      currentApiKey = localStorage.getItem('fixbot_gemini_key') || "";
+    } catch(e) {}
+
+
+    if (currentApiKey) {
+      apiKeyInput.value = currentApiKey;
+      settingsModal.classList.add('hidden');
+      apiKeyWarning.classList.add('hidden');
+    }
+
+
+    saveSettingsBtn.addEventListener('click', () => {
+      const key = apiKeyInput.value.trim();
+      if (key) {
+        currentApiKey = key;
+        try {
+          localStorage.setItem('fixbot_gemini_key', key);
+        } catch(e) {}
+        settingsModal.classList.add('hidden');
+        apiKeyWarning.classList.add('hidden');
+      }
+    });
+
+
+    uploadBtn.addEventListener('click', () => fileInput.click());
+
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          base64Image = evt.target.result.split(',')[1];
+          imagePreview.src = evt.target.result;
+          imagePreviewContainer.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+
+    removeImageBtn.addEventListener('click', () => {
+      base64Image = null;
+      fileInput.value = '';
+      imagePreviewContainer.classList.add('hidden');
+    });
+
+
+    function appendMessage(role, text, imgSrc = null) {
+      const isUser = role === 'user';
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`;
+
+
+      let content = `
+        <div class="w-8 h-8 rounded-lg ${isUser ? 'bg-slate-800' : 'bg-orange-600'} flex-shrink-0 flex items-center justify-center text-white text-xs">
+          <i class="fa-solid ${isUser ? 'fa-user' : 'fa-robot'}"></i>
+        </div>
+        <div class="${isUser ? 'bg-orange-600 text-white rounded-tr-none' : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'} p-4 rounded-2xl max-w-[85%] text-sm space-y-2 leading-relaxed">
+          ${imgSrc ? `<img src="${imgSrc}" class="w-full h-40 object-cover rounded-xl mb-2 border border-slate-700">` : ''}
+          <div>${formatText(text)}</div>
+        </div>
+      `;
+
+
+      msgDiv.innerHTML = content;
+      chatContainer.appendChild(msgDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+
+    function formatText(txt) {
+      return txt
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/⚠️ ALERTE SÉCURITÉ/g, '<span class="inline-block bg-red-500/20 text-red-400 border border-red-500/40 px-2 py-1 rounded-lg font-bold my-1">⚠️ ALERTE SÉCURITÉ</span>');
+    }
+
+
+    async function sendMessageToGemini(text, image) {
+      if (!currentApiKey) {
+        toggleModal(true);
+        return;
+      }
+
+
+      const userParts = [];
+      if (text) userParts.push({ text: text });
+      if (image) {
+        userParts.push({
+          inline_data: {
+            mime_type: "image/jpeg",
+            data: image
+          }
+        });
+      }
+
+
+      chatHistory.push({ role: 'user', parts: userParts });
+
+
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'flex gap-3';
+      loadingDiv.innerHTML = `
+        <div class="w-8 h-8 rounded-lg bg-orange-600 flex-shrink-0 flex items-center justify-center text-white text-xs">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl rounded-tl-none text-slate-400 text-xs flex items-center gap-2">
+          <i class="fa-solid fa-circle-notch fa-spin text-orange-500"></i> FixBot analyse votre demande...
+        </div>
+      `;
+      chatContainer.appendChild(loadingDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${currentApiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents: chatHistory
+          })
+        });
+
+
+        const data = await response.json();
+        chatContainer.removeChild(loadingDiv);
+
+
+        if (data.candidates && data.candidates[0].content) {
+          const botReply = data.candidates[0].content.parts[0].text;
+          chatHistory.push({ role: 'model', parts: [{ text: botReply }] });
+          appendMessage('bot', botReply);
+        } else {
+          appendMessage('bot', "Désolé, une erreur s'est produite. Vérifie la clé API.");
+        }
+      } catch (err) {
+        chatContainer.removeChild(loadingDiv);
+        appendMessage('bot', "Erreur de connexion. Vérifie ton réseau ou la clé API.");
+      }
+    }
+
+
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = userInput.value.trim();
+      if (!text && !base64Image) return;
+
+
+      const currentImgSrc = base64Image ? `data:image/jpeg;base64,${base64Image}` : null;
+      appendMessage('user', text || "Diagnostic photo", currentImgSrc);
+
+
+      const currentImg = base64Image;
+
+
+      userInput.value = '';
+      base64Image = null;
+      fileInput.value = '';
+      imagePreviewContainer.classList.add('hidden');
+
+
+      sendMessageToGemini(text, currentImg);
+    });
+  </script>
+</body>
+</html>
