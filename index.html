@@ -226,5 +226,24 @@ Maintiens un ton professionnel et encourageant.`;
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
     </script>
+<script>
+// Permet d'ouvrir les paramètres ou de gérer la clé API facilement
+document.addEventListener("DOMContentLoaded", function() {
+    const settingsBtn = document.querySelector('.fa-gear')?.closest('button') || document.querySelector('[onclick*="setting"], #settings, .settings-btn');
+    
+    // Si on clique sur la roue dentée, on demande la clé si elle n'existe pas
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', function() {
+            let cleActuelle = localStorage.getItem('gemini_api_key') || '';
+            let nouvelleCle = prompt("Entrez votre clé API Google AI Studio :", cleActuelle);
+            if (nouvelleCle !== null) {
+                localStorage.setItem('gemini_api_key', nouvelleCle.trim());
+                alert("Clé API enregistrée avec succès !");
+            }
+        });
+    }
+});
+</script>
+
 </body>
 </html>
