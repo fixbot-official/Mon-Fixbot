@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test FixBot</title>
+</head>
+<body style="background: #111; color: white; text-align: center; padding-top: 50px;">
+    <h1>Test de fonctionnement</h1>
+    <button id="monBouton" style="padding: 15px 25px; font-size: 18px; background: orange; color: white; border: none; border-radius: 8px;">CLIQUE ICI</button>
+
+    <script>
+        document.getElementById('monBouton').addEventListener('click', function() {
+            alert('Le JavaScript fonctionne parfaitement !');
+        });
+    </script>
+</body>
+</html>
